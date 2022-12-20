@@ -6,75 +6,85 @@ public class PlayerController : MonoBehaviour
 {
     [SerializeField] private Animator playerAnim;
     [SerializeField] private float speed = 10.0f;
+    [SerializeField] private GameObject bulletPrefab;
     private Vector3 direction = new Vector3(0.0f,0.0f,0.0f);
-    private Rigidbody playerRb;
     private float xBound = 13;
     private float zBound = 7;
-    public GameObject bulletPrefab;
     private bool canFire = true;
     private float fireRate = 0.5f;
     private bool gameOver = false;
-    
     private Vector3 bulletOffset = new Vector3 (0.1f, 1.58f, 1f);
-    // Start is called before the first frame update
+
     void Start()
     {
-        //playerAnim = GetComponent<SimplePeople_Man_Business_White>();
         Debug.Log("Paul Smith must Survive!");
-        playerRb = GetComponent<Rigidbody>();
+        // Set up animation flags
         playerAnim.SetInteger("WeaponType_int", 1);
-
-        
+        playerAnim.SetBool("Static_b", true);
     }
 
-    // Update is called once per frame
     void Update()
     {
-        MovePlayer();
-        TurnToFace();
-        ConstrainPlayerPosition();
-        if (Input.GetMouseButton(0) && canFire){
-            Debug.Log(fireRate);
-            SpawnBullet();
+        if (!gameOver) {
+            MovePlayer();
+            TurnToFace();
+            ConstrainPlayerPosition();
+            if (Input.GetMouseButton(0) && canFire){
+                Shoot();
+            }
         }
     }
+    void MovePlayer()
+    {        
+        // Hopefully I'll be able to use the direction vector to set the animations
+        direction.x = Input.GetAxis("Horizontal");
+        direction.z = Input.GetAxis("Vertical");
+        // Prevent the size of the direction vector for exceeding 1
+        direction = Vector3.ClampMagnitude(direction, 1.0f);
+        // Set the speed of the animation - consider farming this out to dedicated method
+        playerAnim.SetFloat("Speed_f", direction.magnitude);
+        // We move relative to world space - otherwise you get tank controls.
+        transform.Translate(direction * speed * Time.deltaTime, Space.World);
+    }
+    
+    void Shoot()
+    {
+        // Consider object pooling for bullets
+        Instantiate(bulletPrefab, GenerateBulletPos(), transform.rotation);
+        canFire = false;
+        StartCoroutine(BulletCooldown());
+    }
 
+    Vector3 GenerateBulletPos()
+    {
+        Vector3 bulletPos = transform.position + transform.forward * bulletOffset.z;
+        bulletPos += transform.right * bulletOffset.x;
+        // Adjust the y offset based on how fast we're moving to adjust for animation changing the gun position
+        // This feels hacky - rework this when I know more about animations!
+        bulletPos.y = bulletOffset.y - (float)(0.3 * direction.magnitude);
+        return bulletPos;
+    }
 
     IEnumerator BulletCooldown()
     {
         yield return new WaitForSeconds(fireRate);
         canFire = true;
-
     }
-
-    void SpawnBullet()
-    {
-        Instantiate(bulletPrefab, GenerateBulletPos(), transform.rotation);
-        canFire = false;
-        StartCoroutine(BulletCooldown());
-    }
+    
     //point in the direction of the mouse
     void TurnToFace()
     {
         // Translate mouse coordinates to a point in the world
         Vector3 mousePos = Input.mousePosition;
         Vector3 point = Camera.main.ScreenToWorldPoint(new Vector3(mousePos.x, mousePos.y, 15));
+        // get faving based on position and mouse location
         Vector3 turnDirection = point - transform.position;
         turnDirection.y = 0;
         turnDirection.Normalize();
         transform.forward = turnDirection;
     }
     // Moves the player
-    void MovePlayer()
-    {        
-        direction.x = Input.GetAxis("Horizontal");
-        direction.z = Input.GetAxis("Vertical");
-        // Prevent the size of the direction vector for exceeding 1
-        direction = Vector3.ClampMagnitude(direction, 1.0f);
-        playerAnim.SetBool("Static_b", true);
-        playerAnim.SetFloat("Speed_f", direction.magnitude);
-        transform.Translate(direction * speed * Time.deltaTime, Space.World);
-    }
+    
 
     // Prevents the player from going out of bounds
     void ConstrainPlayerPosition()
@@ -95,34 +105,27 @@ public class PlayerController : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
+        // So far the only power up increases fire rate. This will need to change later.
         if(other.CompareTag("Powerup")){
-            canFire = true;
             fireRate /= 3;
             StartCoroutine(PowerUpCooldown());
             Destroy(other.gameObject);
         }
     }
 
-    void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("Enemy")) {
-            gameOver = true;
-            Debug.Log("Paul Smith did not Survive");
-        }
-    }
-
     IEnumerator PowerUpCooldown()
     {
+        // Power up lasts for 5 seconds - this will change depending on powerup
         yield return new WaitForSeconds(5);
         fireRate *= 3;
     }
 
-    Vector3 GenerateBulletPos()
+    void OnCollisionEnter(Collision collision)
     {
-        Vector3 bulletPos = transform.position + transform.forward * bulletOffset.z;
-        bulletPos.y = bulletOffset.y;
-        bulletPos += transform.right * bulletOffset.x;
-        return bulletPos;
-        
+        // This needs to do more
+        if (collision.gameObject.CompareTag("Enemy")) {
+            gameOver = true;
+            Debug.Log("Paul Smith did not Survive");
+        }
     }
 }

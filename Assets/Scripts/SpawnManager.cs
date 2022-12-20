@@ -13,17 +13,13 @@ public class SpawnManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        // This should read in values froma  JSON file and spawn in waves based on that
         SpawnEnemies(EnemyType.slow, 2);
         SpawnEnemies(EnemyType.medium, 4);
         SpawnEnemies(EnemyType.fast, 3);
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-       
-    }
-
+    // Not sure about this. Worth refactoring when I implement the JSON but I need to plan it out a bit.
     void SpawnEnemies(EnemyType enemyType, int numberOfEnemies)
     {
         for(int i=0; i < numberOfEnemies; i++){

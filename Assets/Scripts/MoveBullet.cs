@@ -7,14 +7,14 @@ public class MoveBullet : MonoBehaviour
     private float speed = 40;
     private float xRange = 40;
     private float zRange = 20;
-    // Start is called before the first frame update
-    void Start()
+    [SerializeField] private float damage = 1.0f;
+
+    void Update()
     {
-        
+        MoveForward();
     }
 
-    // Update is called once per frame
-    void Update()
+    void MoveForward()
     {
         transform.Translate(Vector3.forward * speed * Time.deltaTime);
         if(Mathf.Abs(transform.position.x) > xRange || Mathf.Abs(transform.position.z) > zRange){
@@ -22,5 +22,13 @@ public class MoveBullet : MonoBehaviour
         }
     }
 
+    void OnTriggerEnter(Collider other)
+    {
+        // should probably have some particle effects for blood splatter in here.
+        if(other.CompareTag("Enemy")){
+            Destroy(gameObject);
+            other.GetComponent<Enemy>().TakeDamage(damage);
+        }
+    }
     
 }
