@@ -7,13 +7,13 @@ public class SpawnManager : MonoBehaviour
 {
     public GameObject[] enemyPrefabs;
     private enum Location {top, bottom, left, right};
-    private enum EnemyType {slow, medium, fast};
+    private enum EnemyType {slow, medium, fast, midBoss, endBoss};
     private float xRange = 20;
     private float zRange = 15;
     EnemyWaves enemyWaves = new EnemyWaves();
-    [SerializeField] private bool readyToSpawn = false;
+    [SerializeField] private bool isReadyToSpawn = false;
     [SerializeField] private int currentWave = 0;
-    [SerializeField] private int currentSubwave = 0;
+    [SerializeField] private int currentSubWave = 0;
 
     // Start is called before the first frame update
     void Start()
@@ -26,18 +26,19 @@ public class SpawnManager : MonoBehaviour
     {
         string path = Application.persistentDataPath + "/waves.json";
         if(!File.Exists(path)){
+            Debug.Log("No custom wave info in config path, loading built-in");
             path = Application.dataPath + "/Config/waves.json";
-            Debug.Log("can't find file in config path");
         }
         string json = File.ReadAllText(path);
+        Debug.Log(json);
         enemyWaves = JsonUtility.FromJson<EnemyWaves>(json);
     }
 
     void Update()
     {
-        if (readyToSpawn)
+        if (isReadyToSpawn)
         {
-            readyToSpawn = false;
+            isReadyToSpawn = false;
             SpawnNextWave();
         }
     }
@@ -48,18 +49,18 @@ public class SpawnManager : MonoBehaviour
             Debug.Log("Ran out of waves");
             return null;
         }
-        if(currentSubwave >= enemyWaves.waves[currentWave].subwaves.Count){
+        if(currentSubWave >= enemyWaves.waves[currentWave].subWaves.Count){
             Debug.LogError("Ran out of subwaves - this shouldn't happen");
             return null;
         }
-        return enemyWaves.waves[currentWave].subwaves[currentSubwave];
+        return enemyWaves.waves[currentWave].subWaves[currentSubWave];
     }
 
     void SpawnNextWave()
     {
-
         SubWave subWave = GetCurrentSubWave();
         if (subWave == null){
+            // TODO: implement wave transition
             Debug.Log("Either all waves are done or something's gone wrong");
             return;
         }
@@ -70,68 +71,80 @@ public class SpawnManager : MonoBehaviour
         
         if (subWave.delay == 0){
             // this is the last subwave of the wave so we should wait for all enemies to be destroyed
-            currentSubwave = 0;
+            currentSubWave = 0;
             currentWave++;
-            StartCoroutine(WaitUntilWipedOut());
+            StartCoroutine(WaitUntilEnemiesWipedOut());
         }
         else {
-            currentSubwave++;
+            currentSubWave++;
             StartCoroutine(WaitForNextSpawn(subWave.delay));
         }
-        
     }
 
     bool IsEnemyAlive(){
+        // not sure if there's a more efficient way of checking this as it's doing it every frame...
         return(GameObject.FindGameObjectsWithTag("Enemy").Length > 0);
     }
 
-    IEnumerator WaitUntilWipedOut()
+    IEnumerator WaitUntilEnemiesWipedOut()
     {
         yield return new WaitWhile(() => IsEnemyAlive());
-        // This should trigger the next wave announcement once this is implemented
-        readyToSpawn = true;
+        isReadyToSpawn = true;
     }
 
-    IEnumerator WaitForNextSpawn(int delay)
+    IEnumerator WaitForNextSpawn(int delaySeconds)
     {
-        yield return new WaitForSeconds(delay);
-        readyToSpawn = true;
-        
+        yield return new WaitForSeconds(delaySeconds);
+        isReadyToSpawn = true;
     }
 
-    // Not sure about this. Worth refactoring when I implement the JSON but I need to plan it out a bit.
-    // Better to have a "SpawnEnemy" method and wrap it in a loop in SpawnEnemies? hmmm.
-    // Should probably have a GenerateRandomPosition function too
+    void SpawnEnemy(EnemyType enemyType, Vector3 spawnLocation)
+    {
+        GameObject enemy = enemyPrefabs[(int)enemyType];
+        Instantiate(enemy, spawnLocation, enemy.transform.rotation);
+    }
+
+    void SpawnEnemy(EnemyType enemyType)
+    {
+        Vector3 spawnLocation = GenerateEnemySpawnLocation();
+        GameObject enemy = enemyPrefabs[(int)enemyType];
+        Instantiate(enemy, spawnLocation, enemy.transform.rotation);
+    }
 
     void SpawnEnemies(EnemyType enemyType, int numberOfEnemies)
     {
         for(int i=0; i < numberOfEnemies; i++){
-            Location location = (Location)Random.Range(0, 4);
-            Vector3 spawnPos = new Vector3(0, 1, 0);
-            switch (location) {
-                case Location.top:
-                    spawnPos.z = zRange;
-                    spawnPos.x = Random.Range(-xRange, xRange);
-                break;
-                case Location.bottom:
-                    spawnPos.z = -zRange;
-                    spawnPos.x = Random.Range(-xRange, xRange);
-                break;
-                case Location.left:
-                    spawnPos.z = Random.Range(-zRange, zRange);
-                    spawnPos.x = -xRange;
-                break;
-                case Location.right:
-                    spawnPos.z = Random.Range(-zRange, zRange);
-                    spawnPos.x = xRange;
-                break;
-                default:
-                break;
-            }
-        
-            Instantiate(enemyPrefabs[(int)enemyType], spawnPos, enemyPrefabs[(int)enemyType].transform.rotation);
+            SpawnEnemy(enemyType);
         }
     }
+
+    Vector3 GenerateEnemySpawnLocation()
+    {
+        Location location = (Location)Random.Range(0, 4);
+        Vector3 spawnLocation = new Vector3(0, 1, 0);
+        switch (location) {
+            case Location.top:
+                spawnLocation.z = zRange;
+                spawnLocation.x = Random.Range(-xRange, xRange);
+            break;
+            case Location.bottom:
+                spawnLocation.z = -zRange;
+                spawnLocation.x = Random.Range(-xRange, xRange);
+            break;
+            case Location.left:
+                spawnLocation.z = Random.Range(-zRange, zRange);
+                spawnLocation.x = -xRange;
+            break;
+            case Location.right:
+                spawnLocation.z = Random.Range(-zRange, zRange);
+                spawnLocation.x = xRange;
+            break;
+            default:
+            break;
+        }
+        return spawnLocation;
+    }
+    
 
     // Wrapper classes for JSON handling because you can't serialize lists of lists, annoyingly
     [System.Serializable]
@@ -145,7 +158,7 @@ public class SpawnManager : MonoBehaviour
     [System.Serializable]
     class EnemyWave
     {
-        public List<SubWave> subwaves = new List<SubWave>();
+        public List<SubWave> subWaves = new List<SubWave>();
         
     }
     [System.Serializable]

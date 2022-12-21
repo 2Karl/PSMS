@@ -1,10 +1,10 @@
 {"waves":[
-	{"subwaves":[
-		{"slow":0,"medium":3,"fast":0,"delay":10},
+	{"subWaves":[
+		{"slow":2,"medium":3,"fast":0,"delay":10},
 		{"slow":0,"medium":4,"fast":0,"delay":10},
 		{"slow":0,"medium":5,"fast":2,"delay":0}]
 	},
-	{"subwaves":[
+	{"subWaves":[
 		{"slow":0,"medium":3,"fast":1,"delay":10},
 		{"slow":0,"medium":3,"fast":2,"delay":10},
 		{"slow":0,"medium":3,"fast":3,"delay":0}]

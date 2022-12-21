@@ -6,8 +6,13 @@ public class Enemy : MonoBehaviour
 {
     [SerializeField] private float speed;
     [SerializeField] private float health;
+    [SerializeField] ParticleSystem bloodSplatter;
+    [SerializeField] ParticleSystem bloodExplosion;
     private GameObject player;
+    private bool canMove = true;
+    [SerializeField] private float damageDelaySeconds;
     // Start is called before the first frame update
+    
     void Start()
     {
         player = GameObject.Find("Player");
@@ -16,7 +21,10 @@ public class Enemy : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Move();
+        if( canMove) {
+            Move();
+        }
+        // Chance for unique behaviour - howl/bark?
     }
 
     void Move()
@@ -36,10 +44,26 @@ public class Enemy : MonoBehaviour
     }
     public void TakeDamage(float damage=1.0f)
     {
+        canMove = false;
+        StartCoroutine(PauseOnDamage(damageDelaySeconds));
+        bloodSplatter.transform.forward = GetDirection();
+        bloodSplatter.Play();
         health-=damage;
         if (health <= 0){
-            Destroy(gameObject);
+            KillSelf();
         }
+    }
+
+    IEnumerator PauseOnDamage(float delaySeconds)
+    {
+        yield return new WaitForSeconds(delaySeconds);
+        canMove = true;
+    }
+
+    void KillSelf()
+    {
+        Instantiate(bloodExplosion, transform.position, bloodExplosion.transform.rotation);
+        Destroy(gameObject);
     }
 
     
