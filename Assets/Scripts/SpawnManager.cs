@@ -30,12 +30,14 @@ public class SpawnManager : MonoBehaviour
             path = Application.dataPath + "/Config/waves.json";
         }
         string json = File.ReadAllText(path);
-        Debug.Log(json);
         enemyWaves = JsonUtility.FromJson<EnemyWaves>(json);
     }
 
     void Update()
     {
+        if (MainManager.Instance.gameState == MainManager.GameState.death) {
+            StopSpawning();
+        }
         if (isReadyToSpawn)
         {
             isReadyToSpawn = false;
@@ -143,6 +145,12 @@ public class SpawnManager : MonoBehaviour
             break;
         }
         return spawnLocation;
+    }
+
+    void StopSpawning()
+    {
+        StopAllCoroutines();
+        isReadyToSpawn = false;
     }
     
 

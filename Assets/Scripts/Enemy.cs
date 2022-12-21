@@ -8,9 +8,11 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float health;
     [SerializeField] ParticleSystem bloodSplatter;
     [SerializeField] ParticleSystem bloodExplosion;
+    [SerializeField] Animator enemyAnim;
     private GameObject player;
     private bool canMove = true;
     [SerializeField] private float damageDelaySeconds;
+    private bool firstTimeTrigger = true;
     // Start is called before the first frame update
     
     void Start()
@@ -21,6 +23,10 @@ public class Enemy : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(MainManager.Instance.gameState == MainManager.GameState.death && firstTimeTrigger) {
+            firstTimeTrigger = false;
+            StartCoroutine(WaitToBark());
+        }
         if( canMove) {
             Move();
         }
@@ -64,6 +70,22 @@ public class Enemy : MonoBehaviour
     {
         Instantiate(bloodExplosion, transform.position, bloodExplosion.transform.rotation);
         Destroy(gameObject);
+    }
+
+    IEnumerator WaitToBark()
+    {
+        float seconds = Random.Range(0f, 1f);
+        yield return new WaitForSeconds(seconds);
+        Debug.Log(seconds);
+        Bark();
+    }
+
+    void Bark()
+    {
+        
+        enemyAnim.SetBool("Bark_b", true);
+        enemyAnim.SetFloat("Speed_f", 0f);
+        canMove = false;
     }
 
     

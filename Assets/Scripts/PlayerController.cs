@@ -12,7 +12,6 @@ public class PlayerController : MonoBehaviour
     private float zBound = 7;
     private bool canFire = true;
     private float fireRate = 0.5f;
-    private bool gameOver = false;
     private Vector3 bulletOffset = new Vector3 (0.1f, 1.58f, 1f);
 
     void Start()
@@ -25,13 +24,11 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (!gameOver) {
+        if (MainManager.Instance.gameState == MainManager.GameState.playing) {
             MovePlayer();
             TurnToFace();
             ConstrainPlayerPosition();
-            if (Input.GetMouseButton(0) && canFire){
-                Shoot();
-            }
+            HandleInputs();
         }
     }
     void MovePlayer()
@@ -46,13 +43,22 @@ public class PlayerController : MonoBehaviour
         // We move relative to world space - otherwise you get tank controls.
         transform.Translate(direction * speed * Time.deltaTime, Space.World);
     }
+
+    void HandleInputs()
+    {
+        if (Input.GetMouseButton(0) && canFire){
+            Shoot();
+        }
+    }
     
     void Shoot()
     {
+        
         // Consider object pooling for bullets
         Instantiate(bulletPrefab, GenerateBulletPos(), transform.rotation);
         canFire = false;
         StartCoroutine(BulletCooldown());
+        
     }
 
     Vector3 GenerateBulletPos()
@@ -107,6 +113,7 @@ public class PlayerController : MonoBehaviour
     {
         // So far the only power up increases fire rate. This will need to change later.
         if(other.CompareTag("Powerup")){
+            Time.timeScale = 0.5f;
             fireRate /= 3;
             StartCoroutine(PowerUpCooldown());
             Destroy(other.gameObject);
@@ -118,14 +125,22 @@ public class PlayerController : MonoBehaviour
         // Power up lasts for 5 seconds - this will change depending on powerup
         yield return new WaitForSeconds(5);
         fireRate *= 3;
+        Time.timeScale = 1f;
     }
 
     void OnCollisionEnter(Collision collision)
     {
         // This needs to do more
         if (collision.gameObject.CompareTag("Enemy")) {
-            gameOver = true;
-            Debug.Log("Paul Smith did not Survive");
+            KillSelf();
         }
+    }
+
+    void KillSelf()
+    {
+        playerAnim.SetInteger("WeaponType_int", 0);
+        playerAnim.SetInteger("DeathType_int", Random.Range(1,3));
+        playerAnim.SetBool("Death_b", true);
+        MainManager.Instance.GameOver();
     }
 }

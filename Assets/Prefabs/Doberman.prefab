@@ -117,6 +117,8 @@ MonoBehaviour:
   health: 1
   bloodSplatter: {fileID: 6664343615064359856}
   bloodExplosion: {fileID: 8441926415955911712, guid: 32c4d53a2bdb07b05bbaec8b7b66a52b, type: 3}
+  enemyAnim: {fileID: 821363048516139101}
+  damageDelaySeconds: 0
 --- !u!54 &5781178923048851077
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -257,6 +259,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2b6e184cdeba888429a079d519a7c8d5, type: 3}
+--- !u!95 &821363048516139101 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 9587414, guid: 2b6e184cdeba888429a079d519a7c8d5, type: 3}
+  m_PrefabInstance: {fileID: 821363048525460107}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &821363048525236259 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 490152, guid: 2b6e184cdeba888429a079d519a7c8d5, type: 3}
