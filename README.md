@@ -29,12 +29,12 @@ The format for the wave data JSON file is very simple - you specify waves and su
 For example:
 
     {"waves":[
-	    {"subwaves":[
+	    {"subWaves":[
 		    {"slow":0,"medium":3,"fast":0,"delay":10},
 		    {"slow":0,"medium":4,"fast":0,"delay":10},
 		    {"slow":0,"medium":5,"fast":2,"delay":0}]
 	    },
-	    {"subwaves":[
+	    {"subWaves":[
 		    {"slow":0,"medium":3,"fast":1,"delay":10},
 		    {"slow":0,"medium":3,"fast":2,"delay":10},
 		    {"slow":0,"medium":3,"fast":3,"delay":0}]
