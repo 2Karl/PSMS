@@ -16,7 +16,7 @@ Planned features:
 * Variety of different enemy types [Currently 3 types exist, behaviour needs to be added]
 * Persistent high scores
 * Different environments
-* Particle effects [Currently the bullets have particles and lighting, need to add hurt effects/explosions
+* Particle effects [IMPLEMENTED - subject to tweaking]
 * Boss fights
 * Some sort of epic UI
 
