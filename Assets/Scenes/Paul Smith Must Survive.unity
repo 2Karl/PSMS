@@ -933,9 +933,9 @@ MonoBehaviour:
   - {fileID: 9220669604914703294, guid: bdec6ce1401276b2285991b91f315513, type: 3}
   - {fileID: 8778460521130305104, guid: 053f6f0b30fa128dc8078dc9530ffdb5, type: 3}
   - {fileID: 5781178923048851096, guid: 62a92c4c81ef570dabb6b4b4e7deb6b4, type: 3}
-  readyToSpawn: 0
+  isReadyToSpawn: 0
   currentWave: 0
-  currentSubwave: 0
+  currentSubWave: 0
 --- !u!1 &1910112458
 GameObject:
   m_ObjectHideFlags: 0
