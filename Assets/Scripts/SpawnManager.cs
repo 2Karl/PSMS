@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 public class SpawnManager : MonoBehaviour
 {
@@ -9,7 +10,7 @@ public class SpawnManager : MonoBehaviour
     private enum EnemyType {slow, medium, fast};
     private float xRange = 20;
     private float zRange = 15;
-    private List<EnemyWave> enemyWaves = new List<EnemyWave>();
+    EnemyWaves enemyWaves = new EnemyWaves();
     [SerializeField] private bool readyToSpawn = false;
     [SerializeField] private int currentWave = 0;
     [SerializeField] private int currentSubwave = 0;
@@ -17,14 +18,19 @@ public class SpawnManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        // This is messy. Fix it.
-        enemyWaves.Add(new EnemyWave());
-        enemyWaves[0].subwaves.Add(new int[] {2,0,0,10});
-        enemyWaves[0].subwaves.Add(new int[] {0,4,0,10});
-        enemyWaves[0].subwaves.Add(new int[] {1,0,1,0});
-        enemyWaves.Add(new EnemyWave());
-        enemyWaves[1].subwaves.Add(new int[] {2,0,0,0});
+        LoadWaves();
         StartCoroutine(WaitForNextSpawn(10));
+    }
+
+    void LoadWaves()
+    {
+        string path = Application.persistentDataPath + "/waves.json";
+        if(!File.Exists(path)){
+            path = Application.dataPath + "/Config/waves.json";
+            Debug.Log("can't find file in config path");
+        }
+        string json = File.ReadAllText(path);
+        enemyWaves = JsonUtility.FromJson<EnemyWaves>(json);
     }
 
     void Update()
@@ -36,31 +42,54 @@ public class SpawnManager : MonoBehaviour
         }
     }
 
+    SubWave GetCurrentSubWave()
+    {
+        if(currentWave >= enemyWaves.waves.Count){
+            Debug.Log("Ran out of waves");
+            return null;
+        }
+        if(currentSubwave >= enemyWaves.waves[currentWave].subwaves.Count){
+            Debug.LogError("Ran out of subwaves - this shouldn't happen");
+            return null;
+        }
+        return enemyWaves.waves[currentWave].subwaves[currentSubwave];
+    }
+
     void SpawnNextWave()
     {
-        if (currentWave == enemyWaves.Count){
-            // In theory you've won the game at this point
+
+        SubWave subWave = GetCurrentSubWave();
+        if (subWave == null){
+            Debug.Log("Either all waves are done or something's gone wrong");
             return;
         }
+        // spawn slow medium and fast enemies according to subwave info
+        SpawnEnemies(EnemyType.slow, subWave.slow);
+        SpawnEnemies(EnemyType.medium, subWave.medium);
+        SpawnEnemies(EnemyType.fast, subWave.fast);
         
-        // spawn slow, medium and fast enemies according to subwave info
-        SpawnEnemies(EnemyType.slow, enemyWaves[currentWave].subwaves[currentSubwave][0]);
-        SpawnEnemies(EnemyType.medium, enemyWaves[currentWave].subwaves[currentSubwave][1]);
-        SpawnEnemies(EnemyType.fast, enemyWaves[currentWave].subwaves[currentSubwave][2]);
-        if (enemyWaves[currentWave].subwaves[currentSubwave][3] > 0){
-            StartCoroutine(WaitForNextSpawn(enemyWaves[currentWave].subwaves[currentSubwave][3]));
+        if (subWave.delay == 0){
+            // this is the last subwave of the wave so we should wait for all enemies to be destroyed
+            currentSubwave = 0;
+            currentWave++;
+            StartCoroutine(WaitUntilWipedOut());
         }
         else {
-            StartCoroutine(WaitForNextSpawn(30));
+            currentSubwave++;
+            StartCoroutine(WaitForNextSpawn(subWave.delay));
         }
-        currentSubwave++;   
-        if (currentSubwave == enemyWaves[currentWave].subwaves.Count){
-            currentWave ++;
-            currentSubwave = 0;
-        }
-        // start waitfornextspawn coroutine if time is non-zero
-        // if the time to next is 0, advance to next wave
         
+    }
+
+    bool IsEnemyAlive(){
+        return(GameObject.FindGameObjectsWithTag("Enemy").Length > 0);
+    }
+
+    IEnumerator WaitUntilWipedOut()
+    {
+        yield return new WaitWhile(() => IsEnemyAlive());
+        // This should trigger the next wave announcement once this is implemented
+        readyToSpawn = true;
     }
 
     IEnumerator WaitForNextSpawn(int delay)
@@ -71,6 +100,9 @@ public class SpawnManager : MonoBehaviour
     }
 
     // Not sure about this. Worth refactoring when I implement the JSON but I need to plan it out a bit.
+    // Better to have a "SpawnEnemy" method and wrap it in a loop in SpawnEnemies? hmmm.
+    // Should probably have a GenerateRandomPosition function too
+
     void SpawnEnemies(EnemyType enemyType, int numberOfEnemies)
     {
         for(int i=0; i < numberOfEnemies; i++){
@@ -101,10 +133,24 @@ public class SpawnManager : MonoBehaviour
         }
     }
 
+    // Wrapper classes for JSON handling because you can't serialize lists of lists, annoyingly
+    [System.Serializable]
+    class SubWave 
+    {
+        public int slow;
+        public int medium;
+        public int fast;
+        public int delay;
+    }
     [System.Serializable]
     class EnemyWave
     {
-        public List<int[]> subwaves = new List<int[]>();
+        public List<SubWave> subwaves = new List<SubWave>();
         
+    }
+    [System.Serializable]
+    class EnemyWaves
+    {
+        public List<EnemyWave> waves = new List<EnemyWave>();
     }
 }
