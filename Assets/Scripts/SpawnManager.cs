@@ -19,7 +19,7 @@ public class SpawnManager : MonoBehaviour
     void Start()
     {
         LoadWaves();
-        StartCoroutine(WaitForNextSpawn(10));
+        StartCoroutine(WaitForNextWave(2));
     }
 
     void LoadWaves()
@@ -45,6 +45,14 @@ public class SpawnManager : MonoBehaviour
         }
     }
 
+    IEnumerator WaitForNextWave(float secondsToWait)
+    {
+        Debug.Log("OK");
+        yield return new WaitForSeconds(secondsToWait);
+        MainManager.Instance.NextWaveIntro();
+        StartCoroutine(WaitForNextSpawn(5));
+    }
+
     SubWave GetCurrentSubWave()
     {
         if(currentWave >= enemyWaves.waves.Count){
@@ -60,6 +68,7 @@ public class SpawnManager : MonoBehaviour
 
     void SpawnNextWave()
     {
+        
         SubWave subWave = GetCurrentSubWave();
         if (subWave == null){
             // TODO: implement wave transition
@@ -75,6 +84,7 @@ public class SpawnManager : MonoBehaviour
             // this is the last subwave of the wave so we should wait for all enemies to be destroyed
             currentSubWave = 0;
             currentWave++;
+            Debug.Log("Wait for enemies to be wiped out");
             StartCoroutine(WaitUntilEnemiesWipedOut());
         }
         else {
@@ -89,8 +99,9 @@ public class SpawnManager : MonoBehaviour
 
     IEnumerator WaitUntilEnemiesWipedOut()
     {
+        Debug.Log("Wait coroutine triggered");
         yield return new WaitWhile(() => IsEnemyAlive());
-        isReadyToSpawn = true;
+        StartCoroutine(WaitForNextWave(2));
     }
 
     IEnumerator WaitForNextSpawn(int delaySeconds)

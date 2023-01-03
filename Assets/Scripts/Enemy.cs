@@ -82,7 +82,6 @@ public class Enemy : MonoBehaviour
     {
         float seconds = Random.Range(0f, 2f);
         yield return new WaitForSeconds(seconds);
-        Debug.Log(seconds);
         Bark();
     }
 

@@ -2,23 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 public class MainManager : MonoBehaviour
 {
     public static MainManager Instance {get; private set;}
-    public enum GameState{mainMenu, pauseMenu, playing, sceneTransition, death}
-    [SerializeField] public GameState gameState {get; private set;} = GameState.playing;
+    public enum GameState{mainMenu, pauseMenu, playing, sceneTransition, death, preWave, postWave}
+    [SerializeField] public GameState gameState {get; private set;} = GameState.preWave;
     private AudioSource mainSource;
-    public int enemyCount {get; private set;} = 0;
-    [SerializeField] private TextMeshProUGUI enemyRemainingText;
-    [SerializeField] private TextMeshProUGUI survivalTimeText;
-    [SerializeField] private GameObject gameOver;
-    
+    [SerializeField] public int enemyCount {get; private set;} = 0;
+    public UIManager uiManager {private get; set;}
     private float survivalTime = 0;
+    private int waveNumber = 0;
 
-
-    // Start is called before the first frame update
     void Awake()
     {
         if(Instance != null) {
@@ -28,22 +25,15 @@ public class MainManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         mainSource = GetComponent<AudioSource>();
-        // This should be in a separate function which trippers on game start
-        // I'll sort it out when I have a menu
-        if(gameState == GameState.playing) {
-            mainSource.Play();
-            gameOver.SetActive(false);
-            enemyRemainingText.text = $"{enemyCount} Enemies Remaining";
-        }
-        //Cursor.visible = false;
     }
 
-    // Update is called once per frame
     void Update()
     {
+
         if (gameState == GameState.playing){
             UpdateTime();
         }
+        // farm out the pause menu stuff to another function
         if (Input.GetKeyDown(KeyCode.Escape) && gameState == GameState.playing) {
             gameState = GameState.pauseMenu;
             Time.timeScale = 0f;
@@ -55,40 +45,57 @@ public class MainManager : MonoBehaviour
             Time.timeScale = 1f;
             mainSource.UnPause();
             //Cursor.visible = false;
-        }   
+        }
+        if(gameState == GameState.death && Input.GetKeyDown(KeyCode.Space)){
+            Reset();
+        }
+
     }
 
     void UpdateTime() {
         survivalTime += Time.deltaTime;
         TimeSpan formattedTime = TimeSpan.FromSeconds(survivalTime);
-        
-        survivalTimeText.text = $"Survived for {formattedTime.ToString("mm':'ss'.'fff")}";
+        uiManager.UpdateTime(formattedTime.ToString("mm':'ss'.'fff"));
     }
 
     public void AddEnemy()
     {
         enemyCount++;
-        enemyRemainingText.text = $"{enemyCount} Enemies Remaining";
+        uiManager.UpdateEnemies(enemyCount);
     }
 
     public void RemoveEnemy()
     {
         enemyCount--;
-        enemyRemainingText.text = $"{enemyCount} Enemies Remaining";
+        uiManager.UpdateEnemies(enemyCount);
     }
 
     public void GameOver()
     {
-        
         gameState = GameState.death;
-        Debug.Log("Paul Smith did not Survive!!!!!");
-        StartCoroutine(DisplayGameOver(3));
+        uiManager.DisplayGameOver();
     }
 
-    IEnumerator DisplayGameOver(float delayInSeconds)
+    void Reset()
     {
-        yield return new WaitForSeconds(delayInSeconds);
-        gameOver.SetActive(true);
-        Debug.Log("time out");
+        waveNumber = 0;
+        survivalTime = 0;
+        enemyCount = 0;
+        gameState = GameState.preWave;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void NextWaveIntro()
+    {
+        waveNumber++;
+        gameState = GameState.preWave;
+        uiManager.DisplayWaveIntro(waveNumber);
+        StartCoroutine(WaitUntilIntroFinished());
+    }
+
+    IEnumerator WaitUntilIntroFinished()
+    {
+        yield return new WaitWhile(() => uiManager.isIntroPlaying);
+        gameState = GameState.playing; 
     }
 }

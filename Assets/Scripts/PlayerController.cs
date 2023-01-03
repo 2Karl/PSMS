@@ -20,7 +20,6 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
-        Debug.Log("Paul Smith must Survive!");
         // Set up animation flags
         playerAnim.SetInteger("WeaponType_int", 1);
         playerAnim.SetBool("Static_b", true);
@@ -29,7 +28,8 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (MainManager.Instance.gameState == MainManager.GameState.playing) {
+        if (MainManager.Instance.gameState == MainManager.GameState.playing ||
+            MainManager.Instance.gameState == MainManager.GameState.preWave) {
             MovePlayer();
             TurnToFace();
             ConstrainPlayerPosition();
@@ -51,14 +51,13 @@ public class PlayerController : MonoBehaviour
 
     void HandleInputs()
     {
-        if (Input.GetMouseButton(0) && canFire){
+        if (Input.GetMouseButton(0) && canFire && MainManager.Instance.gameState == MainManager.GameState.playing ){
             Shoot();
         }
     }
     
     void Shoot()
     {
-        
         // Consider object pooling for bullets
         playerAudio.PlayOneShot(gunshot);
         Instantiate(bulletPrefab, GenerateBulletPos(), transform.rotation);
@@ -95,9 +94,7 @@ public class PlayerController : MonoBehaviour
         turnDirection.Normalize();
         transform.forward = turnDirection;
     }
-    // Moves the player
     
-
     // Prevents the player from going out of bounds
     void ConstrainPlayerPosition()
     {
