@@ -14,10 +14,14 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float damageDelaySeconds;
     private bool firstTimeTrigger = true;
     // Start is called before the first frame update
+    private AudioSource enemySource;
+    [SerializeField] private AudioClip yelp;
+    [SerializeField] private AudioClip bark;
     
     void Start()
     {
         player = GameObject.Find("Player");
+        enemySource = GetComponent<AudioSource>();
     }
 
     // Update is called once per frame
@@ -54,6 +58,7 @@ public class Enemy : MonoBehaviour
         StartCoroutine(PauseOnDamage(damageDelaySeconds));
         bloodSplatter.transform.forward = GetDirection();
         bloodSplatter.Play();
+        enemySource.PlayOneShot(yelp);
         health-=damage;
         if (health <= 0){
             KillSelf();
@@ -74,7 +79,7 @@ public class Enemy : MonoBehaviour
 
     IEnumerator WaitToBark()
     {
-        float seconds = Random.Range(0f, 1f);
+        float seconds = Random.Range(0f, 2f);
         yield return new WaitForSeconds(seconds);
         Debug.Log(seconds);
         Bark();
@@ -82,7 +87,9 @@ public class Enemy : MonoBehaviour
 
     void Bark()
     {
-        
+        enemySource.clip = bark;
+        enemySource.loop = true;
+        enemySource.Play();
         enemyAnim.SetBool("Bark_b", true);
         enemyAnim.SetFloat("Speed_f", 0f);
         canMove = false;

@@ -104,6 +104,7 @@ public class SpawnManager : MonoBehaviour
     {
         GameObject enemy = enemyPrefabs[(int)enemyType];
         Instantiate(enemy, spawnLocation, enemy.transform.rotation);
+        MainManager.Instance.AddEnemy(enemy);
     }
 
     void SpawnEnemy(EnemyType enemyType)
@@ -111,6 +112,7 @@ public class SpawnManager : MonoBehaviour
         Vector3 spawnLocation = GenerateEnemySpawnLocation();
         GameObject enemy = enemyPrefabs[(int)enemyType];
         Instantiate(enemy, spawnLocation, enemy.transform.rotation);
+        MainManager.Instance.AddEnemy(enemy);
     }
 
     void SpawnEnemies(EnemyType enemyType, int numberOfEnemies)

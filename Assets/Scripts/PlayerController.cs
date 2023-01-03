@@ -12,7 +12,11 @@ public class PlayerController : MonoBehaviour
     private float zBound = 7;
     private bool canFire = true;
     private float fireRate = 0.5f;
-    private Vector3 bulletOffset = new Vector3 (0.1f, 1.58f, 1f);
+    private Vector3 bulletOffset = new Vector3 (0.1f, 1.58f, 1f); // kinda hacky; do not like
+    private AudioSource playerAudio;
+    [SerializeField] private AudioClip gunshot;
+    [SerializeField] private AudioClip[] deathSounds;
+
 
     void Start()
     {
@@ -20,6 +24,7 @@ public class PlayerController : MonoBehaviour
         // Set up animation flags
         playerAnim.SetInteger("WeaponType_int", 1);
         playerAnim.SetBool("Static_b", true);
+        playerAudio = GetComponent<AudioSource>();
     }
 
     void Update()
@@ -55,6 +60,7 @@ public class PlayerController : MonoBehaviour
     {
         
         // Consider object pooling for bullets
+        playerAudio.PlayOneShot(gunshot);
         Instantiate(bulletPrefab, GenerateBulletPos(), transform.rotation);
         canFire = false;
         StartCoroutine(BulletCooldown());
@@ -117,6 +123,8 @@ public class PlayerController : MonoBehaviour
             fireRate /= 3;
             StartCoroutine(PowerUpCooldown());
             Destroy(other.gameObject);
+            playerAudio.pitch = 0.5f;
+            
         }
     }
 
@@ -126,12 +134,14 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(5);
         fireRate *= 3;
         Time.timeScale = 1f;
+        playerAudio.pitch = 1f;
+        
     }
 
     void OnCollisionEnter(Collision collision)
     {
         // This needs to do more
-        if (collision.gameObject.CompareTag("Enemy")) {
+        if (collision.gameObject.CompareTag("Enemy") && MainManager.Instance.gameState != MainManager.GameState.death) {
             KillSelf();
         }
     }
@@ -140,6 +150,8 @@ public class PlayerController : MonoBehaviour
     {
         playerAnim.SetInteger("WeaponType_int", 0);
         playerAnim.SetInteger("DeathType_int", Random.Range(1,3));
+        playerAudio.clip = deathSounds[Random.Range(0,deathSounds.Length)];
+        playerAudio.Play();
         playerAnim.SetBool("Death_b", true);
         MainManager.Instance.GameOver();
     }
