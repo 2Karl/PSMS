@@ -74,6 +74,7 @@ public class Enemy : MonoBehaviour
     void KillSelf()
     {
         Instantiate(bloodExplosion, transform.position, bloodExplosion.transform.rotation);
+        MainManager.Instance.RemoveEnemy();
         Destroy(gameObject);
     }
 

@@ -84,8 +84,7 @@ public class SpawnManager : MonoBehaviour
     }
 
     bool IsEnemyAlive(){
-        // not sure if there's a more efficient way of checking this as it's doing it every frame...
-        return(GameObject.FindGameObjectsWithTag("Enemy").Length > 0);
+        return MainManager.Instance.enemyCount > 0;
     }
 
     IEnumerator WaitUntilEnemiesWipedOut()
@@ -104,7 +103,7 @@ public class SpawnManager : MonoBehaviour
     {
         GameObject enemy = enemyPrefabs[(int)enemyType];
         Instantiate(enemy, spawnLocation, enemy.transform.rotation);
-        MainManager.Instance.AddEnemy(enemy);
+        MainManager.Instance.AddEnemy();
     }
 
     void SpawnEnemy(EnemyType enemyType)
@@ -112,7 +111,7 @@ public class SpawnManager : MonoBehaviour
         Vector3 spawnLocation = GenerateEnemySpawnLocation();
         GameObject enemy = enemyPrefabs[(int)enemyType];
         Instantiate(enemy, spawnLocation, enemy.transform.rotation);
-        MainManager.Instance.AddEnemy(enemy);
+        MainManager.Instance.AddEnemy();
     }
 
     void SpawnEnemies(EnemyType enemyType, int numberOfEnemies)
