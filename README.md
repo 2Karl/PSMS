@@ -14,11 +14,11 @@ Planned features:
 * A range of weapon powerups [currently only one powerup exists, which boosts firing rate for 5 seconds]
 * Dynamic generation of enemy wave data from JSON file [IMPLEMENTED]
 * Variety of different enemy types [Currently 3 types exist, behaviour needs to be added]
-* Persistent high scores
+* Persistent high scores [game currently tracks how long you survived in total]
 * Different environments
 * Particle effects [IMPLEMENTED - subject to tweaking]
 * Boss fights
-* Some sort of epic UI
+* Some sort of epic UI [There's some UI in there now, but it's far from epic]
 
 ----
 
