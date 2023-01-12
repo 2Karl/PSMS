@@ -22,6 +22,7 @@ public class MainManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+        gameState = GameState.mainMenu;
         Instance = this;
         DontDestroyOnLoad(gameObject);
         mainSource = GetComponent<AudioSource>();
